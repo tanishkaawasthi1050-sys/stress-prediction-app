@@ -3,135 +3,157 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 
-# Load model
+# ---------- Load Model ----------
 model = joblib.load("stress_model.pkl")
 
-# ---------- Custom Color Theme ----------
+# ---------- Page Settings ----------
+st.set_page_config(page_title="Student Stress Predictor", layout="centered")
+
+# ---------- Custom Styling ----------
 st.markdown("""
 <style>
-
 .stApp {
 background: linear-gradient(to right, #667eea, #764ba2);
 color: white;
 }
 
 h1 {
-text-align: center;
-color: #FFD700;
-}
-
-h2, h3 {
-color: #FFDD95;
+text-align:center;
+color:#FFD700;
 }
 
 .stButton>button {
-background-color: #FF4B4B;
-color: white;
-border-radius: 10px;
-height: 3em;
-width: 200px;
-font-size: 16px;
+background-color:#FF4B4B;
+color:white;
+border-radius:10px;
+height:3em;
+width:220px;
+font-size:16px;
 }
-
-.css-1d391kg {
-background-color: #1f1f2e;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # ---------- Title ----------
 st.title("🧠 Student Stress Level Predictor")
-st.write("💡 Understand your stress level and get helpful suggestions for a healthier lifestyle.")
+
+st.write("Understand your stress level based on lifestyle habits.")
 
 # ---------- Sidebar ----------
-st.sidebar.title("ℹ About This App")
+st.sidebar.title("ℹ About")
 
 st.sidebar.write("""
-This AI model predicts student stress levels based on lifestyle habits such as:
+This AI model predicts **student stress levels** using:
 
-😴 Sleep hours  
-📚 Academic performance  
-🤕 Headaches  
-📝 Study load  
-⚽ Extracurricular activities  
-
-Use the sliders and click **Predict Stress** to see your result.
+😴 Sleep Hours  
+🤕 Headache Frequency  
+📚 Academic Performance  
+📝 Study Load  
+⚽ Extracurricular Activities  
 """)
 
-st.sidebar.write("🌿 Built for Student Mental Wellness")
-
-# ---------- Input Section ----------
-st.subheader("📋 Enter Your Lifestyle Details")
+# ---------- Inputs ----------
+st.subheader("📋 Enter Your Details")
 
 col1, col2 = st.columns(2)
 
 with col1:
     sleep_hours = st.slider("😴 Sleep Hours", 0, 12, 6)
-    headaches = st.slider("🤕 Headaches Frequency", 0, 10, 2)
+    headaches = st.slider("🤕 Headache Frequency", 0, 10, 2)
     extracurricular = st.slider("⚽ Extracurricular Activities", 0, 10, 4)
 
 with col2:
     academic_performance = st.slider("📚 Academic Performance", 0, 10, 7)
     study_load = st.slider("📝 Study Load", 0, 10, 5)
 
-# ---------- Prediction Button ----------
+# ---------- Prediction ----------
 if st.button("🔍 Predict Stress Level"):
 
     input_data = np.array([[sleep_hours, headaches, academic_performance, study_load, extracurricular]])
-    prediction = model.predict(input_data)
+
+    prediction = model.predict(input_data)[0]
 
     st.subheader("📊 Prediction Result")
 
-    if prediction[0] == 0:
+    if prediction == 0:
         st.success("😊 Low Stress Level")
-    elif prediction[0] == 1:
+
+    elif prediction == 1:
         st.warning("⚠ Moderate Stress Level")
+
     else:
         st.error("🚨 High Stress Level")
 
-    # ---------- Graph ----------
-    st.subheader("📈 Your Lifestyle Analysis")
+    # ---------- Lifestyle Graph ----------
+    st.subheader("📈 Lifestyle Analysis")
 
     features = ["Sleep", "Headaches", "Academic", "Study Load", "Activities"]
     values = [sleep_hours, headaches, academic_performance, study_load, extracurricular]
 
     fig, ax = plt.subplots()
     ax.bar(features, values)
-    ax.set_title("Lifestyle Factors Affecting Stress")
+    ax.set_ylabel("Score")
+    ax.set_title("Lifestyle Factors")
 
     st.pyplot(fig)
 
+    # ---------- Probability Graph ----------
+    if hasattr(model, "predict_proba"):
+
+        st.subheader("📊 Stress Probability")
+
+        prob = model.predict_proba(input_data)[0]
+        labels = ["Low", "Moderate", "High"]
+
+        fig2, ax2 = plt.subplots()
+        ax2.bar(labels, prob)
+        ax2.set_ylabel("Probability")
+        ax2.set_title("Prediction Confidence")
+
+        st.pyplot(fig2)
+
     # ---------- Suggestions ----------
-    st.subheader("💡 Suggestions to Reduce Stress")
+    st.subheader("💡 Suggestions")
 
-    st.markdown("""
-🌿 **Improve Sleep**
-- Try to sleep 7–8 hours regularly.
+    if prediction == 0:
 
-🧘 **Practice Relaxation**
-- Meditation  
-- Deep breathing  
-- Yoga
+        st.markdown("""
+### 😊 Low Stress
 
-📅 **Manage Study Time**
-- Use time-blocking technique
-- Avoid last minute study pressure
+Great! Your stress level is low.
 
-🤝 **Stay Social**
-- Spend time with friends or family
-- Participate in activities
+✔ Maintain good sleep schedule  
+✔ Continue healthy study habits  
+✔ Stay active in extracurricular activities  
+✔ Keep social connections strong
+""")
 
-📵 **Limit Screen Time**
-- Avoid mobile before sleeping
+    elif prediction == 1:
 
-🎧 **Listen to relaxing music**
-- Music helps reduce mental pressure
+        st.markdown("""
+### ⚠ Moderate Stress
+
+Try improving these habits:
+
+✔ Improve sleep routine  
+✔ Take breaks while studying  
+✔ Practice meditation or breathing exercises  
+✔ Reduce unnecessary academic pressure
+""")
+
+    else:
+
+        st.markdown("""
+### 🚨 High Stress
+
+Consider these steps:
+
+✔ Get proper rest and sleep  
+✔ Practice yoga or relaxation techniques  
+✔ Talk with friends, mentors, or family  
+✔ Reduce workload temporarily  
+✔ Seek professional help if stress persists
 """)
 
 # ---------- Footer ----------
 st.markdown("---")
-
-st.write("💙 *Take care of your mental health*")
-st.write("✨ Stay positive | Stay balanced | Stay healthy")
-
+st.write("💙 Stay Positive • Stay Balanced • Take Care of Your Mental Health")
